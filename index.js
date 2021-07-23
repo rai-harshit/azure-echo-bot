@@ -62,9 +62,17 @@ const QnAConfiguration = {
     endpointKey: process.env.QnAAuthKey,
     host: process.env.QnAEndpointHostName
 };
+
+const LuisConfiguration = {
+    applicationId: process.env.LuisAppId,
+    endpointKey: process.env.LuisAPIKey,
+    endpoint: process.env.LuisAPIHostName
+};
+
 // Pass into configuration object
 const configuration = {
-    QnAConfiguration
+    QnAConfiguration,
+    LuisConfiguration
 }
 // Pass the configuration to the EchoBot
 const myBot = new EchoBot(configuration);

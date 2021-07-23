@@ -3,16 +3,59 @@
 
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const { QnAMaker } = require('botbuilder-ai');
+const IntentRecognier = require('./intentrecognizer');
 
 class EchoBot extends ActivityHandler {
     constructor(configuration, qnaOptions) {
         super();
         if (!configuration) throw new Error('[QnAMakerBot]: Missing parameter. Configuration is required');
+        
+        // Create QnA connector
         this.qnaMaker = new QnAMaker(configuration.QnAConfiguration, qnaOptions);
+
+        // Create a LUIS connector
+        this.intentRecognier = new IntentRecognier(configuration.LuisConfiguration);
+
         // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
         this.onMessage(async (context, next) => {
+
             // Send user input to QnA maker
             const qnaResults = await this.qnaMaker.getAnswers(context);
+
+            // Send user input to LUIS
+            const LuisResult = await this.intentRecognier.executeLuisQuery(context);
+
+            // Determine which service to respond with
+            if (LuisResult.luisResult.prediction.topIntent == 'findParking' &&
+                LuisResult.intents.findParking.score > .6 &&
+                LuisResult.entities.$instance && 
+                LuisResult.entities.$instance.location &&
+                LuisResult.entities.$instance.location[0]){
+                
+                    const location = LuisResult.entities.$instance.location[0].text;
+                    // call api with location entity info
+                    const getLocationOfParking = 'I found parking with a charging station in ' + location;
+                    console.log(getLocationOfParking);
+                    await context.sendActivity(getLocationOfParking);
+                    await next();
+                    return;
+            }
+
+            if (LuisResult.luisResult.prediction.topIntent == 'findSuperchargers' &&
+                LuisResult.intents.findSuperchargers.score > .6 &&
+                LuisResult.entities.$instance && 
+                LuisResult.entities.$instance.location &&
+                LuisResult.entities.$instance.location[0]){
+                
+                    const location = LuisResult.entities.$instance.location[0].text;
+                    // call api with location entity info
+                    const getLocationOfParking = 'I found parking with a supercharge support in ' + location;
+                    console.log(getLocationOfParking);
+                    await context.sendActivity(getLocationOfParking);
+                    await next();
+                    return;
+            }
+
             // If an answer was received from QnA maker, send it back to the user.
             if(qnaResults[0]){
                 console.log(qnaResults[0])
