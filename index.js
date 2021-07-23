@@ -56,8 +56,18 @@ const onTurnErrorHandler = async (context, error) => {
 // Set the onTurnError for the singleton BotFrameworkAdapter.
 adapter.onTurnError = onTurnErrorHandler;
 
-// Create the main dialog.
-const myBot = new EchoBot();
+// Map configuration values values from .env file for each service
+const QnAConfiguration = {
+    knowledgeBaseId: process.env.QnAKnowledgebaseId,
+    endpointKey: process.env.QnAAuthKey,
+    host: process.env.QnAEndpointHostName
+};
+// Pass into configuration object
+const configuration = {
+    QnAConfiguration
+}
+// Pass the configuration to the EchoBot
+const myBot = new EchoBot(configuration);
 
 // Listen for incoming requests.
 server.post('/api/messages', (req, res) => {
